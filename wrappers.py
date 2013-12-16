@@ -9,7 +9,7 @@ def run_blast(sequences, db, path='', blast_type='blastn', num_hits=1, evalue=10
                '-num_alignments', str(num_hits),
                '-evalue', str(evalue),
                ' -outfmt \'6 qseqid qstart qend sseqid sstart send evalue']
-    write_fasta(sequences, 'tmp.fasta')
+    dna.write_fasta(sequences, 'tmp.fasta')
     blast = subprocess.Popen(command, stdout=subprocess.PIPE)
     blast_out, blast_err = blast.communicate()
     blast_results = [hit.split("\t") for hit in blast_out.split("\n")]
