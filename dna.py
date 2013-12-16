@@ -12,7 +12,7 @@ def reverse_complement(string):
 
 genetic_code = {'TTT':'F', 'TTC':'F', 'TTA':'L', 'TTG':'L',
                 'CTT':'L', 'CTC':'L', 'CTA':'L', 'CTG':'L',
-                'ATT':'I', 'ATC':'I', 'ATA':'L', 'ATG':'M',
+                'ATT':'I', 'ATC':'I', 'ATA':'I', 'ATG':'M',
                 'GTT':'V', 'GTC':'V', 'GTA':'V', 'GTG':'V',
                 'TCT':'S', 'TCC':'S', 'TCA':'S', 'TCG':'S',
                 'CCT':'P', 'CCC':'P', 'CCA':'P', 'CCG':'P',
