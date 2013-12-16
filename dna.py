@@ -48,7 +48,7 @@ def read_fasta(filename):
     sequence_name = ''
     for line in fasta_file:
         if line[0] == '>':
-            sequence_name = line[1:-1]]
+            sequence_name = line[1:-1]
             sequences[sequence_name] = ''
         elif sequence_name == '':
             sys.exit('File is not in proper FASTA format.')
