@@ -24,7 +24,7 @@ genetic_code = {'TTT':'F', 'TTC':'F', 'TTA':'L', 'TTG':'L',
                 'GAT':'D', 'GAC':'D', 'GAA':'E', 'GAG':'E',
                 'TGT':'C', 'TGC':'C', 'TGA':'*opal', 'TGG':'W',
                 'CGT':'R', 'CGC':'R', 'CGA':'R', 'CGG':'R',
-                'AGT':'S', 'AGC':'S', 'AGA':'R', 'AGC':'R',
+                'AGT':'S', 'AGC':'S', 'AGA':'R', 'AGG':'R',
                 'GGT':'G', 'GGC':'G', 'GGA':'G', 'GGG':'G'}
 
 def translate(string):
