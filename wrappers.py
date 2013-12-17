@@ -28,6 +28,9 @@ def run_fsa(sequences, path=''):
     dna.write_fasta(sequences, 'tmp.fasta')
     fsa = subprocess.Popen(command, stdout=subprocess.PIPE)
     fsa_out, fsa_err = fsa.communicate()
-    fsa_results = fsa_out.split("\n")
+    fsa_file = open('tmp.aln', 'w')
+    fsa_filewrite(fsa_out)
+    fsa_results = dna.read_fasta('tmp.aln')
     os.remove('tmp.fasta')
+    os.remove('tmp.aln')
     return fsa_results
