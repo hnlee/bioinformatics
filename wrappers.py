@@ -6,10 +6,11 @@ def run_blast(sequences, db, path='', blast_type='blastn', num_hits=1, evalue=10
     command = [path + blast_type,
                '-query', 'tmp.fasta',
                '-db', db,
-               '-best_hit_overhang', '0.1',
-               '-best_hit_score_edge', '0.1',
+               '-culling_limit', str(num_hits),
+               #'-best_hit_overhang', '0.1',
+               #'-best_hit_score_edge', '0.1',
                # fix this later to work with more than just best hit
-               '-max_target_seqs', str(num_hits),
+               #'-max_target_seqs', str(num_hits),
                '-evalue', str(evalue),
                '-outfmt', '6 qseqid qlen qstart qend sseqid length sstart send evalue']
     dna.write_fasta(sequences, 'tmp.fasta')
