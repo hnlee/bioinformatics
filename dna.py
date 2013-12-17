@@ -63,3 +63,18 @@ def write_fasta(sequences, filename):
         fasta_file.write('>%s\n%s\n\n' % (sequence, sequences[sequence]))
     fasta_file.close()
     return
+
+def retrieve_sequence(coordinates, filename, seq_id=''):
+    sequences = read_fasta(filename)
+    if len(sequences) == 1:
+        sequence = sequences.values()[0]
+    else:
+        try:
+            sequence = sequences[seq_id]
+        except:
+            sys.exit('Specify a sequence ID from the FASTA file.')
+    if coordinates[0] < coordinates[1]:
+        return sequence[coordinates[0]:(coordinates[1]+1)]
+    else:
+        return reverse_complement(sequence[coordinates[1]:(coordinates[0]+1)])
+
