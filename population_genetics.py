@@ -3,7 +3,7 @@ import wrappers
 import math
 
 def codon_alignment(sequences):
-    translated_seqs = dict(list(dna.translate(sequences[seq])
+    translated_seqs = dict(list((seq, dna.translate(sequences[seq]))
                                 for seq in sequences))
     protein_alignment = wrappers.run_fsa(translated_seqs)
     nucleotide_alignment = {}

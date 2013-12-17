@@ -32,7 +32,7 @@ def translate(string):
     nucleotides = ''.join(nucleotides.split('-'))
     amino_acids = ''.join([genetic_code[nucleotides[(3*i):(3*i+3)]]
                            for i in range(len(nucleotides)/3)])
-    return amino_acids.split('*')[0] 
+    return amino_acids 
 
 def transcribe(string):
     dna = string.upper()
@@ -48,7 +48,7 @@ def read_fasta(filename):
     sequence_name = ''
     for line in fasta_file:
         if line[0] == '>':
-            sequence_name = line[1:-1]
+            sequence_name = line[1:-1].split()[0]
             sequences[sequence_name] = ''
         elif sequence_name == '':
             sys.exit('File is not in proper FASTA format.')
@@ -64,8 +64,7 @@ def write_fasta(sequences, filename):
     fasta_file.close()
     return
 
-def retrieve_sequence(coordinates, filename, seq_id=''):
-    sequences = read_fasta(filename)
+def retrieve_sequence(coordinates, sequences, seq_id=''):
     if len(sequences) == 1:
         sequence = sequences.values()[0]
     else:
@@ -74,7 +73,7 @@ def retrieve_sequence(coordinates, filename, seq_id=''):
         except:
             sys.exit('Specify a sequence ID from the FASTA file.')
     if coordinates[0] < coordinates[1]:
-        return sequence[coordinates[0]:(coordinates[1]+1)]
+        return sequence[(coordinates[0]-1):coordinates[1]]
     else:
-        return reverse_complement(sequence[coordinates[1]:(coordinates[0]+1)])
+        return reverse_complement(sequence[(coordinates[1]-1):coordinates[0]])
 

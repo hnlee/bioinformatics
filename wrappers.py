@@ -24,12 +24,12 @@ def run_muscle(sequences, path=''):
     return
 
 def run_fsa(sequences, path=''):
-    command = [fsa, 'tmp.fasta']
+    command = ['fsa', 'tmp.fasta']
     dna.write_fasta(sequences, 'tmp.fasta')
     fsa = subprocess.Popen(command, stdout=subprocess.PIPE)
     fsa_out, fsa_err = fsa.communicate()
     fsa_file = open('tmp.aln', 'w')
-    fsa_filewrite(fsa_out)
+    fsa_file.write(fsa_out)
     fsa_results = dna.read_fasta('tmp.aln')
     os.remove('tmp.fasta')
     os.remove('tmp.aln')
