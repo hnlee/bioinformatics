@@ -5,15 +5,23 @@ import math
 def codon_alignment(sequences):
     translated_seqs = dict(list(dna.translate(sequences[seq])
                                 for seq in sequences))
-    wrappers.run_fsa()
-    return
+    protein_alignment = wrappers.run_fsa(translated_seqs)
+    nucleotide_alignment = {}
+    for sequence in protein_alignment:
+        nucleotide_alignment[sequence] = ''
+        for pos, aa in enumerate(protein_alignment[sequence]):
+            if aa == '-':
+                nucleotide_alignment[sequence] += '---'
+            else:
+                nucleotide_alignment[sequence] += sequences[sequence][(3*pos):(3*pos+3)]
+    return nucleotide_alignment
 
-def pairwise(alignment):
-    seq_pairs = list(set([tuple(sorted([x, y])) 
-                          for x in alignment
-                          for y in alignment
-                          if x != y]))
-    return seq_pairs
+def pairwise(iterable):
+    pairs = list(set([tuple(sorted([x, y])) 
+                      for x in iterable
+                      for y in iterable
+                      if x != y]))
+    return pairs
 
 def tajima_D(alignment):
 
@@ -67,6 +75,7 @@ def substitution_rate(codon_x, codon_y):
             next_step = ''.join(codon)
             if dna.genetic_code[next_step] == '*':
                 num_paths -= 1
+                break
             elif next_step == prev_step:
                 continue
             elif dna.genetic_code[prev_step] == dna.genetic_code[next_step]:
@@ -90,6 +99,12 @@ def nei_gojobori(alignment):
         for i in range(seq_length/3):
             codon_x = sequence_x[(3*i):(3*i+3)]
             codon_y = sequence_y[(3*i):(3*i+3)]
+            if dna.genetic_code[codon_x] == "*" or dna.genetic_code[codon_y] == "*":
+                num_codons -= 1
+                next
+            if '-' in codon_x or '-' in codon_y:
+                num_codons -= 1
+                next
             S += sum(synonymous_sites[codon_x], synonymous_sites[codon_y])/2
             (sd, nd) = substitution_rate(codon_x, codon_y)
             Sd += sd
