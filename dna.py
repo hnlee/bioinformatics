@@ -42,13 +42,16 @@ def reverse_transcribe(string):
     rna = string.upper()
     return rna.replace('U','T')
 
-def read_fasta(filename):
+def read_fasta(filename, short_id=True):
     fasta_file = open(filename, 'r')
     sequences = {}
     sequence_name = ''
     for line in fasta_file:
         if line[0] == '>':
-            sequence_name = line[1:-1].split()[0]
+            if short_id:
+                sequence_name = line[1:-1].split()[0]
+            else:
+                sequence_name = line[1:-1]
             sequences[sequence_name] = ''
         elif sequence_name == '':
             sys.exit('File is not in proper FASTA format.')
