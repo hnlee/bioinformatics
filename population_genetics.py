@@ -5,8 +5,8 @@ import scipy
 import scipy.stats
 
 def gene_align(sequences):
-    codon_alignment = run_prank(sequences, codon=T)
-    protein_alignment = convert_prank(codon_alignment)
+    codon_alignment = wrappers.run_prank(sequences, codon=T)
+    protein_alignment = wrappers.convert_prank(codon_alignment)
     return codon_alignment, protein_alignment
 
 def pairwise(iterable):
