@@ -20,8 +20,24 @@ def run_blast(sequences, db, path='', blast_type='blastn', num_hits=1, evalue=10
     os.remove('tmp.fasta')
     return blast_results
 
-def run_muscle(sequences, path=''):
-    return
+def run_prank(sequences, path='', tree='', codon=F, translate=F):
+    command = [path + 'prank',
+               '-d=tmp.fasta',
+               '-o=output',
+               '-F']
+    if tree != '':
+        command += ['t=' + tree]
+    if codon:
+        command += ['-codon']
+    if translate:
+        command += ['-translate']
+    dna.write_fasta(sequences, 'tmp.fasta')
+    prank = subprocess.Popen(command, stdout=subprocess.PIPE)
+    prank_out, prank_err = prank.communicate()
+    prank_results = dna.read_fasta('output.best.fas')
+    os.remove('tmp.fasta')
+    os.remove('output.best.fas')
+    return prank_results
 
 def run_fsa(sequences, path=''):
     command = ['fsa', 'tmp.fasta']
