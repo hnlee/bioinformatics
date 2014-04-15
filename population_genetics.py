@@ -1,6 +1,8 @@
 import dna
 import wrappers
 import math
+import scipy
+import scipy.stats
 
 def codon_alignment(sequences):
     translated_seqs = dict(list((seq, dna.translate(sequences[seq]))
@@ -14,7 +16,7 @@ def codon_alignment(sequences):
                 nucleotide_alignment[sequence] += '---'
             else:
                 nucleotide_alignment[sequence] += sequences[sequence][(3*pos):(3*pos+3)]
-    return nucleotide_alignment
+    return (nucleotide_alignment, protein_alignment)
 
 def pairwise(iterable):
     pairs = list(set([tuple(sorted([x, y])) 
@@ -119,7 +121,37 @@ def nei_gojobori(alignment):
     (dS, dN, dN_dS) = map(lambda x: x/len(pairs), (dS, dN, dN_dS))
     return (dS, dN, dN_dS)
 
-def mcdonald_kreitman():
+def mcdonald_kreitman(alignment, within, between):
+    length = max(len(alignment[strain]) for strain in alignment)
+    outgroup = [alignment[strain] for strain in between
+                if strain in alignment and len(alignment[strain]) == length]
+    ingroup = [alignment[strain] for strain in within
+               if strain in alignment and len(alignment[strain]) == length]
+    (Pn, Ps, Dn, Ds) = (0, 0, 0, 0)
+    for codon in range(length/3):
+        in_codons = [sequence[(3*codon):(3*codon+3)] for sequence in ingroup]
+        out_codons = [sequence[(3*codon):(3*codon+3)] for sequence in outgroup]
+        if in_codons == [] or out_codons == []:
+            continue
+        elif sum(map(lambda x: x not in dna.genetic_code, out_codons)) > 0:
+            continue
+        elif sum(map(lambda x: x not in dna.genetic_code, in_codons)) > 0:
+            continue
+        elif len(set(in_codons)) == 1:
+            aa = set([dna.genetic_code[bases] for bases in out_codons])
+            if in_codons[0] in out_codons:
+                continue
+            elif dna.genetic_code[in_codons[0]] in aa:
+                Ds += 1
+            else:
+                Dn += 1
+        else:
+            aa = set([dna.genetic_code[bases] for bases in in_codons])
+            if len(aa) > 1:
+                Pn += 1
+            else:
+                Ps += 1
+    (NI, fisher_p) = scipy.stats.fisher_exact([[Ds, Ps],[Dn, Pn]])   
     return (Pn, Ps, Dn, Ds, fisher_p, NI)
 
 def F_st():
