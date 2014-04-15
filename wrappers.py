@@ -39,7 +39,7 @@ def run_prank(sequences, path='', tree='', codon=False, translate=False):
     os.remove('tmp.best.fas')
     return prank_results
 
-def convert_prank(sequences, path='', dna='', input_format=''):
+def convert_prank(sequences, path='', dna_input='', input_format=''):
     command = [path + 'prank',
                '-convert',
                '-d=tmp.fasta',
@@ -51,8 +51,8 @@ def convert_prank(sequences, path='', dna='', input_format=''):
             command += ['-f=' + input_format]
         else:
             sys.exit('Specify one of the following: %s' % (', '.join(formats)))
-    if dna != '':
-        command += ['dna=' + dna]
+    if dna_input != '':
+        command += ['dna=' + dna_input]
     else:
         command += ['-translate']
     dna.write_fasta(sequences, 'tmp.fasta')
