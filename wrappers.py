@@ -20,7 +20,7 @@ def run_blast(sequences, db, path='', blast_type='blastn', num_hits=1, evalue=10
     os.remove('tmp.fasta')
     return blast_results
 
-def run_prank(sequences, path='', tree='', codon=F, translate=F):
+def run_prank(sequences, path='', tree='', codon=False, translate=False):
     command = [path + 'prank',
                '-d=tmp.fasta',
                '-o=tmp',
