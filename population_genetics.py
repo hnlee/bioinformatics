@@ -4,19 +4,6 @@ import math
 import scipy
 import scipy.stats
 
-def codon_alignment(sequences):
-    translated_seqs = dict(list((seq, dna.translate(sequences[seq]))
-                                for seq in sequences))
-    protein_alignment = wrappers.run_fsa(translated_seqs)
-    nucleotide_alignment = {}
-    for sequence in protein_alignment:
-        nucleotide_alignment[sequence] = ''
-        for pos, aa in enumerate(protein_alignment[sequence]):
-            if aa == '-':
-                nucleotide_alignment[sequence] += '---'
-            else:
-                nucleotide_alignment[sequence] += sequences[sequence][(3*pos):(3*pos+3)]
-    return (nucleotide_alignment, protein_alignment)
 
 def pairwise(iterable):
     pairs = list(set([tuple(sorted([x, y])) 
