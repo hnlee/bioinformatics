@@ -23,7 +23,7 @@ def run_blast(sequences, db, path='', blast_type='blastn', num_hits=1, evalue=10
 def run_prank(sequences, path='', tree='', codon=F, translate=F):
     command = [path + 'prank',
                '-d=tmp.fasta',
-               '-o=output',
+               '-o=tmp',
                '-F']
     if tree != '':
         command += ['t=' + tree]
@@ -34,10 +34,36 @@ def run_prank(sequences, path='', tree='', codon=F, translate=F):
     dna.write_fasta(sequences, 'tmp.fasta')
     prank = subprocess.Popen(command, stdout=subprocess.PIPE)
     prank_out, prank_err = prank.communicate()
-    prank_results = dna.read_fasta('output.best.fas')
+    prank_results = dna.read_fasta('tmp.best.fas')
     os.remove('tmp.fasta')
-    os.remove('output.best.fas')
+    os.remove('tmp.best.fas')
     return prank_results
+
+def convert_prank(sequences, path='', dna='', input_format=''):
+    command = [path + 'prank',
+               '-convert',
+               '-d=tmp.fasta',
+               '-o=tmp',
+               '-keep']
+    formats = ['fasta','phylipi','phylips','paml','nexus','raxml']
+    if input_format != '':
+        try input_format in format:
+            command += ['-f=' + input_format]
+        except:
+            sys.exit('Specify one of the following: %s' % (', '.join(formats)))
+    if dna != '':
+        command += ['dna=' + dna]
+    else:
+        command += ['-translate']
+    dna.write_fasta(sequences, 'tmp.fasta')
+    prank = subprocess.Popen(command, stdout=subprocess.PIPE)
+    prank_out, prank_err = prank.communicate()
+    prank_results = dna.read_fasta('tmp.best.fas')
+    os.remove('tmp.fasta')
+    os.remove('tmp.best.fas')
+    return prank_results
+    
+
 
 def run_fsa(sequences, path=''):
     command = ['fsa', 'tmp.fasta']
