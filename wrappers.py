@@ -58,9 +58,9 @@ def convert_prank(sequences, path='', dna_input='', input_format=''):
     dna.write_fasta(sequences, 'tmp.fasta')
     prank = subprocess.Popen(command, stdout=subprocess.PIPE)
     prank_out, prank_err = prank.communicate()
-    prank_results = dna.read_fasta('tmp.best.fas')
+    prank_results = dna.read_fasta('tmp.fas')
     os.remove('tmp.fasta')
-    os.remove('tmp.best.fas')
+    os.remove('tmp.fas')
     return prank_results
     
 
