@@ -47,9 +47,9 @@ def convert_prank(sequences, path='', dna='', input_format=''):
                '-keep']
     formats = ['fasta','phylipi','phylips','paml','nexus','raxml']
     if input_format != '':
-        try input_format in format:
+        if input_format in format:
             command += ['-f=' + input_format]
-        except:
+        else:
             sys.exit('Specify one of the following: %s' % (', '.join(formats)))
     if dna != '':
         command += ['dna=' + dna]
