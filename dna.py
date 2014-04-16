@@ -80,3 +80,10 @@ def retrieve_sequence(coordinates, sequences, seq_id=''):
     else:
         return reverse_complement(sequence[(coordinates[1]-1):coordinates[0]])
 
+def within_interval(query, reference):
+    [left, right] = [False, False]
+    if query[0] >= min(reference) and query[0] <= max(reference):
+        left = True
+    if query[1] >= min(reference) and query[1] <= max(reference):
+        right = True
+    return [left, right]
