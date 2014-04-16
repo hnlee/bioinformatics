@@ -12,7 +12,7 @@ def run_blast(sequences, db, path='', blast_type='blastn', num_hits=1, evalue=10
                # fix this later to work with more than just best hit
                #'-max_target_seqs', str(num_hits),
                '-evalue', str(evalue),
-               '-outfmt', '6 qseqid qlen qstart qend sseqid length sstart send evalue']
+               '-outfmt', '6 qseqid qlen qstart qend sseqid length sstart send evalue pident']
     dna.write_fasta(sequences, 'tmp.fasta')
     blast = subprocess.Popen(command, stdout=subprocess.PIPE)
     blast_out, blast_err = blast.communicate()
