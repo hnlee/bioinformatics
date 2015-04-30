@@ -97,6 +97,7 @@ def sqlify_fasta(filename, dbname, tblname='', short_id=True):
     cursor.execute('''CREATE TABLE ''' + tblname + '''(
                         sequence_name text, sequence text
                       );''')
+    conn.commit()
     fasta_file = open(filename, 'r')
     sequence_name = ''
     sequence = ''
@@ -108,6 +109,7 @@ def sqlify_fasta(filename, dbname, tblname='', short_id=True):
                                     \'''' + sequence_name + '''\',
                                     \'''' + sequence + '''\'
                                   );''')
+                conn.commit()
             if short_id:
                 sequence_name = line[1:-1].split()[0]
             else:
@@ -121,10 +123,10 @@ def sqlify_fasta(filename, dbname, tblname='', short_id=True):
                         \'''' + sequence_name + '''\',
                         \'''' + sequence + '''\'
                       );''')
-    cursor.execute('''CREATE UNIQUE INDEX id ON ''' + tblname + '''(sequence_name);''')
+    conn.commit()
+    cursor.execute('''CREATE INDEX id_''' + tblname + '''  
+                      ON ''' + tblname + '''(sequence_name);''')
     conn.commit()
     conn.close()
     return dbname
 
-
-            
