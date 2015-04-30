@@ -89,7 +89,9 @@ def within_interval(query, reference):
         right = True
     return [left, right]
 
-def sqlify_fasta(filename, dbname, tblname=filename.split('.')[0], short_id=True):
+def sqlify_fasta(filename, dbname, tblname='', short_id=True):
+    if tblname == '':
+        tblname = filename.split('.')[0]
     conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE ''' + tblname + '''(
