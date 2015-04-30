@@ -1,4 +1,5 @@
 import sys
+import sqlite3
 
 complement = {'A':'T', 
               'C':'G', 
@@ -87,3 +88,41 @@ def within_interval(query, reference):
     if query[1] >= min(reference) and query[1] <= max(reference):
         right = True
     return [left, right]
+
+def sqlify_fasta(filename, dbname, tblname=filename.split('.')[0], short_id=True):
+    conn = sqlite3.connect(dbname)
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE ''' + tblname + '''(
+                        sequence_name text, sequence text
+                      );''')
+    fasta_file = open(filename, 'r')
+    sequence_name = ''
+    sequence = ''
+    for line in fasta_file:
+        if line[0] == '>':
+            if sequence != '':
+                cursor.execute('''INSERT INTO ''' + tblname + '''(sequence_name, sequence) 
+                                  VALUES (
+                                    \'''' + sequence_name + '''\',
+                                    \'''' + sequence + '''\'
+                                  );''')
+            if short_id:
+                sequence_name = line[1:-1].split()[0]
+            else:
+                sequence_name = line[1:-1]
+        elif sequence_name == '':
+            sys.exit('File is not in proper FASTA format.')
+        else:
+            sequence += line[:-1].upper()
+    cursor.execute('''INSERT INTO ''' + tblname + '''(sequence_name, sequence) 
+                      VALUES (
+                        \'''' + sequence_name + '''\',
+                        \'''' + sequence + '''\'
+                      );''')
+    cursor.execute('''CREATE UNIQUE INDEX id ON ''' + tblname + '''(sequence_name);'''
+    cursor.commit()
+    conn.close()
+    return dbname
+
+
+            
