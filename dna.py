@@ -128,7 +128,7 @@ def sqlify_fasta(filename, dbname, tblname='', short_id=True):
     return dbname
 
 def retrieve_sql(coordinates, dbname, tblname, seq_id):
-    conn.connect(dbname)
+    conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
     conn.execute('''SELECT * FROM ?  
                     WHERE sequence_name = ?;''' % (tblname, seq_id))
