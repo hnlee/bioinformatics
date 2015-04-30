@@ -94,21 +94,20 @@ def sqlify_fasta(filename, dbname, tblname='', short_id=True):
         tblname = filename.split('.')[0]
     conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE ''' + tblname + '''(
-                        sequence_name text, sequence text
-                      );''')
+    cursor.execute('''CREATE TABLE ?(
+                        sequence_name text, sequence text, sequence_order integer
+                      );''', (tblname,))
     conn.commit()
     fasta_file = open(filename, 'r')
     sequence_name = ''
+    sequence_order = 0
     sequence = ''
     for line in fasta_file:
         if line[0] == '>':
             if sequence != '':
-                cursor.execute('''INSERT INTO ''' + tblname + '''(sequence_name, sequence) 
-                                  VALUES (
-                                    \'''' + sequence_name + '''\',
-                                    \'''' + sequence + '''\'
-                                  );''')
+                cursor.execute('''INSERT INTO ?(sequence_name, sequence, sequence_order) 
+                                  VALUES (?,?);''', 
+                    (tblname, sequence_name, sequence, sequence_order)) 
                 conn.commit()
             if short_id:
                 sequence_name = line[1:-1].split()[0]
@@ -118,15 +117,26 @@ def sqlify_fasta(filename, dbname, tblname='', short_id=True):
             sys.exit('File is not in proper FASTA format.')
         else:
             sequence += line[:-1].upper()
-    cursor.execute('''INSERT INTO ''' + tblname + '''(sequence_name, sequence) 
-                      VALUES (
-                        \'''' + sequence_name + '''\',
-                        \'''' + sequence + '''\'
-                      );''')
+    cursor.execute('''INSERT INTO ?(sequence_name, sequence, sequence_order) 
+                      VALUES (?,?);''', 
+        (tblname, sequence_name, sequence, sequence_order))
     conn.commit()
-    cursor.execute('''CREATE INDEX id_''' + tblname + '''  
-                      ON ''' + tblname + '''(sequence_name);''')
+    cursor.execute('''CREATE INDEX id_?  
+                      ON ?(sequence_name);''', (tblname, tblname))
     conn.commit()
     conn.close()
     return dbname
 
+def retrieve_sql(coordinates, dbname, tblname, seq_id):
+    conn.connect(dbname)
+    cursor = conn.cursor()
+    conn.execute('''SELECT * FROM ?  
+                    WHERE sequence_name = ?;''' % (tblname, seq_id))
+    row = conn.fetchone()
+    if row == None:
+        sys.exit('Specify a sequence ID from the FASTA file.')
+    sequence = row[1]
+    if coordinates[0] < coordinates[1]:
+        return sequence[(coordinates[0]-1):coordinates[1]]
+    else:
+        return reverse_complement(sequence[(coordinates[1]-1):coordinates[0]])
