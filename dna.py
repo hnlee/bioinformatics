@@ -120,7 +120,7 @@ def sqlify_fasta(filename, dbname, tblname=filename.split('.')[0], short_id=True
                         \'''' + sequence + '''\'
                       );''')
     cursor.execute('''CREATE UNIQUE INDEX id ON ''' + tblname + '''(sequence_name);'''
-    cursor.commit()
+    conn.commit()
     conn.close()
     return dbname
 
