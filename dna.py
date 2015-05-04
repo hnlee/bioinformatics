@@ -135,13 +135,115 @@ def retrieve_sql(coordinates, dbname, tblname, seq_id):
     if row == None:
         sys.exit('Specify a sequence ID from the FASTA file.')
     sequence = row[1]
+    conn.close()
     if coordinates[0] < coordinates[1]:
         return sequence[(coordinates[0]-1):coordinates[1]]
     else:
         return reverse_complement(sequence[(coordinates[1]-1):coordinates[0]])
 
-def sqlify_rast(rastname, dbname, tblname):
-    return
+def sqlify_rast(rastdir, dbname, tblname):
+    peg = read_fasta(rastdir + '/peg.fa', short_id=False) 
+    rna = read_fasta(rastdir + '/rna.fa', short_id=False)
+    functions_tbl = open(rastdir + 'functions.tbl', 'r')
+    peg_functions = dict(list((line.split()[0], (line.split()[1], line.split()[-1]))
+                              for line in functions_tbl))
+    functions_tbl.close()
+    rna_tbl = open(rastdir + 'rna.tbl', 'r')
+    rna_functions = dict(list((line.split()[0], line.split()[1:])
+                               for line in rna_tbl))
+    rna_tbl.close()
+    annotations = {}
+    for i in sorted(peg):
+        peg_id = i.split()[0]
+        [start, end] = list(int(j) for j in i.split('_')[-2:])
+        contig = i.split()[1].split('_')[0]
+        aa_seq = peg[i]
+        nt_seq = retrieve_sql((start, end), dbname, tblname, contig)    
+        if peg_id in peg_functions:
+            (fig_id, function) = peg_functions[peg_id]
+        else:
+            (fig_id, function) = ('', '')
+        annotations[peg_id] = (fig_id, contig, start, end, function, nt_seq, aa_seq)
+    for i in sorted(rna):
+        rna_id = i
+        [start, end] = list(int(j) for j in rna_functions[rna_id][1:2])
+        contig = rna_functions[rna_id][0]
+        function = rna_functions[rna_id][-1]
+        aa_seq = ''
+        nt_seq = rna[i]
+        annotations[rna_id] = (function, contig, start, end, function, nt_seq, aa_seq)
+    conn = sqlite3.connect(dbname)
+    cursor = conn.cursor()
+    cursor.execute("""CREATE TABLE genes_""" + tblname + """(
+                      feature_id text, 
+                      fig_id text,
+                      contig text,
+                      start integer,
+                      end integer, 
+                      function text,
+                      nt_seq text,
+                      aa_seq text
+                      )""")
+    cursor.executemany("""INSERT INTO genes_""" + tblname + """(
+                          feature_id, 
+                          fig_id, 
+                          contig, 
+                          start, 
+                          end, 
+                          function, 
+                          nt_seq,
+                          aa_seq
+                          )""", list([i] + annotations[i] for i in sorted(annotations)))
+    conn.commit()
+    cursor.execute('CREATE INDEX id_genes_' + tblname + ' ON ' + tblname + '(contig)')
+    conn.close()
+    return annotations
 
-def make_gbk(dbname, tblname, outputname):
-    return
+def make_gbk(dbname, tblname, outputname, organism):
+    output = open(outputname, 'w')
+    conn = sqlite3.connect()
+    cursor = conn.cursor()
+    contigs = dict(list((row[0], len(row[1])) for row in
+                        cursor.execute('SELECT sequence_name, sequence FROM ' + tblname)
+    for contig in contigs:
+        output.write('FEATURES             Location/Qualifiers\n')
+        output.write('     source          1..%i\n' % (contigs[contig])
+        output.write('                     /organism=\"%s\"\n' % (organism)
+        output.write('                     /mol_type=\"genomic DNA\"\n')
+        output.write('                     /strain=\"%s\"\n' % (tblname)
+        output.write('                     /chromosome=\"%s\"\n' % (contig)
+
+        for peg in cursor.execute("""SELECT feature_id, start, end, function, aa_seq 
+                                     FROM genes_""" + tblname + """ WHERE 
+                                     contig=? AND 
+                                     feature_id GLOB \'prot_*\'""", (contig,)):
+            (feature_id, start, end, function, aa_seq) = peg
+            if start <= end: 
+                output.write('     CDS             %i..%i\n' % (start, end))
+            else:
+                output.write('     CDS             complement(%i..%i)\n' % (end, start))
+            output.write('                     /protein_id=\"%s\"\n' % (gene))
+            output.write('                     /function=\"%s\"\n' % (function))
+            if '(EC ' in function:
+                ec_number = function.split('EC ')[1].split(')')[0]
+                output.write('                     /EC_number=\"%s\"\n' % (ec_number))
+            output.write('                     /db_xref=\"NMPDR:%s\"\n' % (fig_id))
+            output.write('                     /translation=\"NMPDR:%s\"\n' % (aa_seq))
+        for rna in cursor.execute("""SELECT feature_id, start, end, function
+                                     FROM genes_""" + tblname + """ WHERE
+                                     contig = ? AND
+                                     feature_id NOT GLOB \'prot_*\'""", (contig,)):
+            (feature_id, start, end, function) = rna
+            if 'tRNA' in function:
+                rna_type = 'tRNA'
+            else:
+                rna_type = 'rRNA'
+            if start <= end: 
+                output.write('     %s             %i..%i\n' % (rna_type, start, end))
+            else:
+                output.write('     %s             complement(%i..%i)\n' % (rna_type, end, start))
+            output.write('                     /function=\"%s\"\n' % (function))
+        cursor.execute('SELECT sequence FROM ' + tblname + ' WHERE sequence_name=?', (contig,))
+        (contig_seq) = cursor.fetchone()
+        output.write('ORIGIN\n%s\n//\n' % (contig_seq))
+    return outputname
