@@ -235,7 +235,7 @@ def make_gbk(dbname, tblname, outputname, organism):
     cursor = conn.cursor()
     contigs = dict(list((row[0], len(row[1])) for row in
                         cursor.execute('SELECT sequence_name, sequence FROM ' + tblname)))
-    for contig in contigs:
+    for contig in sorted(contigs):
         output.write('FEATURES             Location/Qualifiers\n')
         output.write('     source          1..%i\n' % (contigs[contig]))
         output.write('                     /organism=\"%s\"\n' % (organism))
