@@ -204,14 +204,14 @@ def make_gbk(dbname, tblname, outputname, organism):
     conn = sqlite3.connect()
     cursor = conn.cursor()
     contigs = dict(list((row[0], len(row[1])) for row in
-                        cursor.execute('SELECT sequence_name, sequence FROM ' + tblname)
+                        cursor.execute('SELECT sequence_name, sequence FROM ' + tblname)))
     for contig in contigs:
         output.write('FEATURES             Location/Qualifiers\n')
-        output.write('     source          1..%i\n' % (contigs[contig])
-        output.write('                     /organism=\"%s\"\n' % (organism)
+        output.write('     source          1..%i\n' % (contigs[contig]))
+        output.write('                     /organism=\"%s\"\n' % (organism))
         output.write('                     /mol_type=\"genomic DNA\"\n')
-        output.write('                     /strain=\"%s\"\n' % (tblname)
-        output.write('                     /chromosome=\"%s\"\n' % (contig)
+        output.write('                     /strain=\"%s\"\n' % (tblname))
+        output.write('                     /chromosome=\"%s\"\n' % (contig))
 
         for peg in cursor.execute("""SELECT feature_id, start, end, function, aa_seq 
                                      FROM genes_""" + tblname + """ WHERE 
