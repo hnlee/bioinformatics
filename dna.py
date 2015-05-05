@@ -233,11 +233,12 @@ def make_gbk(dbname, tblname, outputname, organism):
     output = open(outputname, 'w')
     conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
-    contigs = dict(list((row[0], len(row[1])) for row in
-                        cursor.execute('SELECT sequence_name, sequence FROM ' + tblname)))
-    for contig in sorted(contigs):
+    contigs = dict(list((row[2], (row[0], len(row[1]))) for row in
+                        cursor.execute('SELECT * FROM ' + tblname)))
+    for i in range(1, len(contigs)+1):
+        contig = contigs[i][0]
         output.write('FEATURES             Location/Qualifiers\n')
-        output.write('     source          1..%i\n' % (contigs[contig]))
+        output.write('     source          1..%i\n' % (contigs[i][1]))
         output.write('                     /organism=\"%s\"\n' % (organism))
         output.write('                     /mol_type=\"genomic DNA\"\n')
         output.write('                     /strain=\"%s\"\n' % (tblname))
@@ -252,6 +253,7 @@ def make_gbk(dbname, tblname, outputname, organism):
             else:
                 output.write('     CDS             complement(%i..%i)\n' % (end, start))
             output.write('                     /protein_id=\"%s\"\n' % (feature_id))
+            output.write('                     /locus_tag=\"%s\"\n' % (feature_id))
             if function != '':
                 output.write('                     /function=\"%s\"\n' % (function))
                 if '(EC ' in function:
@@ -278,6 +280,7 @@ def make_gbk(dbname, tblname, outputname, organism):
                 output.write('     %s             %i..%i\n' % (rna_type, start, end))
             else:
                 output.write('     %s             complement(%i..%i)\n' % (rna_type, end, start))
+            output.write('                     /locus_tag=\"%s\"\n' % (feature_id))
             output.write('                     /function=\"%s\"\n' % (function))
         cursor.execute('SELECT sequence FROM ' + tblname + ' WHERE sequence_name=?', (contig,))
         (contig_seq,) = cursor.fetchone()
@@ -292,3 +295,22 @@ def make_gbk(dbname, tblname, outputname, organism):
     conn.close()
     output.close()
     return outputname
+
+def mauve_coordinates(coordinates, dbname, tblname):
+    conn = sqlite3.connect(dbname)
+    cursor = conn.cursor()
+    contigs = dict(list((row[2], (row[0], len(row[1]))) for row in
+                        cursor.execute('SELECT * FROM ' + tblname)))
+    contig_coordinates = reduce(lambda x,y: x + contigs[y][1],
+                                range(1, len(contigs)+1))
+    fasta_coordinates = []
+    for i in coordinates:
+        for (j, k) in enumerate(contig_coordinates):
+            if i <= k:
+                if j == 1:
+                    fasta_coordinates += [(contigs[j][0], k)]
+                else:
+                    fasta_coordinates += [(contigs[j][0], k-contig_coordinates[(j-1)])]
+    return fasta_coordinates
+
+
