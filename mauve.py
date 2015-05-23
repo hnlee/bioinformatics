@@ -3,6 +3,23 @@ import sys
 import sqlite3
 import re
 
+def mauve_coordinates(coordinates, dbname, tblname):
+    conn = sqlite3.connect(dbname)
+    cursor = conn.cursor()
+    contigs = dict(list((row[2], (row[0], len(row[1]))) for row in
+                        cursor.execute('SELECT * FROM ' + tblname)))
+    contig_coordinates = reduce(lambda x,y: x + contigs[y][1],
+                                range(1, len(contigs)+1))
+    fasta_coordinates = []
+    for i in coordinates:
+        for (j, k) in enumerate(contig_coordinates):
+            if i <= k:
+                if j == 1:
+                    fasta_coordinates += [(contigs[j][0], k)]
+                else:
+                    fasta_coordinates += [(contigs[j][0], k-contig_coordinates[(j-1)])]
+    return fasta_coordinates
+
 def sqlify_xmfa(filename, dbname, tblname=''):
     if tblname == '':
         tblname = filename.split('.')[0]
