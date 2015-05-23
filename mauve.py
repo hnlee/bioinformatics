@@ -53,7 +53,7 @@ def sqlify_xmfa(filename, dbname, tblname=''):
                 conn.commit()
             metadata = line[:-1].split()[1:2]
             sequence_name = sequence_names[metadata[0].split(':')[0]]
-            if metadata[1] = '+':
+            if metadata[1] == '+':
                 start = int(metadata[0].split(':')[1].split('-')[0])
                 end = int(metadata[0].split(':')[1].split('-')[1])
             else:
@@ -68,7 +68,7 @@ def sqlify_xmfa(filename, dbname, tblname=''):
             sequence += line[:-1].upper()
     for p in range(1, block+1):
         cursor.execute('SELECT sequence_name FROM ' + tblname + ' WHERE block=?',
-                       (p,)
+                       (p,))
         block_sequences = [str(row[0]) for row in cursor.fetchall()]
         for q in sequence_names:
             if q not in block_sequences:
@@ -81,5 +81,5 @@ def sqlify_xmfa(filename, dbname, tblname=''):
     return dbname
 
 def call_polymorphisms(dbname, tblname, outputname):
-
+    return outputname
 
