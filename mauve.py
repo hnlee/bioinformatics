@@ -51,6 +51,7 @@ def sqlify_xmfa(filename, dbname, tblname=''):
                 cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?)',
                                (block, sequence_name, sequence, start, end))
                 conn.commit()
+            sequence = ''
             metadata = line[:-1].split()[1:3]
             sequence_name = sequence_names[metadata[0].split(':')[0]]
             if metadata[1] == '+':
@@ -63,10 +64,11 @@ def sqlify_xmfa(filename, dbname, tblname=''):
             cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?)',
                            (block, sequence_name, sequence, start, end))
             conn.commit()
-            print "Wrote local colinear block %i" % (block)
             block += 1
+            sequence = ''
         else:
             sequence += line[:-1].upper()
+    print "Saved all alignment data"
     for p in range(1, block+1):
         cursor.execute('SELECT sequence_name FROM ' + tblname + ' WHERE block=?',
                        (p,))
@@ -78,6 +80,7 @@ def sqlify_xmfa(filename, dbname, tblname=''):
                 conn.commit()
     cursor.execute('CREATE INDEX id_' + tblname + ' ON ' + tblname + '(block)')
     conn.commit()
+    print "Indexed alignment table"
     conn.close()
     return dbname
 
