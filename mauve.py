@@ -8,15 +8,15 @@ def mauve_coordinates(coordinates, dbname, tblname):
     cursor = conn.cursor()
     contigs = dict(list((row[2], (row[0], len(row[1]))) for row in
                         cursor.execute('SELECT * FROM ' + tblname)))
-    contig_lengths = list(contigs[n][1] for n in range(1, len(contigs)+1))
-    contig_coordinates = [1] + map(lambda x: contig_lengths[:x+1]+1, range(len(contigs)))
+    contig_lengths = [contigs[n][1] for n in range(1, len(contigs)+1)]
+    contig_coordinates = [1] + map(lambda x: sum(contig_lengths[:x+1])+1, range(len(contigs)))
     fasta_coordinates = []
     for i in coordinates:
         contig = 0
         coordinate = 0
         for (j, k) in enumerate(contig_coordinates):
-            if i > k:
-                contig = contigs[j-1][0]
+            if i < k:
+                contig = contigs[j][0]
                 coordinate = i - contig_coordinates[j-1] + 1
                 break
         fasta_coordinates += [(contig, coordinate)]
