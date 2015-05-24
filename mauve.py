@@ -27,12 +27,12 @@ def sqlify_xmfa(filename, dbname, tblname=''):
         tblname = filename.split('.')[0]
     conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
-    cursor.execute("""CREATE IF NOT EXISTS " + tblname + "(
+    cursor.execute("""CREATE TABLE IF NOT EXISTS """ + tblname + """(
                       block integer,
                       sequence_name text,
                       sequence text,
                       start integer,
-                      end integer,
+                      end integer
                       )""")
     xmfa_file = open(filename, 'r')
     block = 1
@@ -48,10 +48,10 @@ def sqlify_xmfa(filename, dbname, tblname=''):
                 sequence_names[number[9:-4]] = name
         elif line[0] == '>':
             if sequence != '' and (start, end) != (0, 0):
-                cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?,?)',
-                               (block, sequence_name, sequence, start, end, strand))
+                cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?)',
+                               (block, sequence_name, sequence, start, end))
                 conn.commit()
-            metadata = line[:-1].split()[1:2]
+            metadata = line[:-1].split()[1:3]
             sequence_name = sequence_names[metadata[0].split(':')[0]]
             if metadata[1] == '+':
                 start = int(metadata[0].split(':')[1].split('-')[0])
@@ -60,8 +60,8 @@ def sqlify_xmfa(filename, dbname, tblname=''):
                 end = int(metadata[0].split(':')[1].split('-')[0])
                 start = int(metadata[0].split(':')[1].split('-')[1])
         elif line[0] == '=' and (start, end) != (0, 0):
-            cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?,?)',
-                           (block, sequence_name, sequence, start, end, strand))
+            cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?)',
+                           (block, sequence_name, sequence, start, end))
             conn.commit()
             block += 1
         else:
