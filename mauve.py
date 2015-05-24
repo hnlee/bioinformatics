@@ -74,7 +74,7 @@ def sqlify_xmfa(filename, dbname, tblname=''):
                        (p,))
         block_sequences = [row[0] for row in cursor.fetchall()]
         for q in sequence_names:
-            if q not in block_sequences:
+            if sequence_names[q] not in block_sequences:
                 cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?)',
                                (p, sequence_names[q], '', 0, 0))
                 conn.commit()
