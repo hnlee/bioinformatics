@@ -63,6 +63,7 @@ def sqlify_xmfa(filename, dbname, tblname=''):
             cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?)',
                            (block, sequence_name, sequence, start, end))
             conn.commit()
+            print "Wrote local colinear block %i" % (block)
             block += 1
         else:
             sequence += line[:-1].upper()
@@ -72,8 +73,8 @@ def sqlify_xmfa(filename, dbname, tblname=''):
         block_sequences = [str(row[0]) for row in cursor.fetchall()]
         for q in sequence_names:
             if q not in block_sequences:
-                cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?,?)',
-                               (p, q, '', 0, 0, '+'))
+                cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?)',
+                               (p, q, '', 0, 0))
                 conn.commit()
     cursor.execute('CREATE INDEX id_' + tblname + ' ON ' + tblname + '(block)')
     conn.commit()
