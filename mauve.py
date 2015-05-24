@@ -42,7 +42,7 @@ def sqlify_xmfa(filename, dbname, tblname=''):
     (start, end) = (0, 0)
     for line in xmfa_file:
         if line[0] == '#':
-            if 'File' in line:
+            if 'File' in line and 'Sequence' in line:
                 (number, path) = line[:-1].split()
                 name = re.split('__|\.', re.split('\\\|\/', path)[-1])[0]       
                 sequence_names[number[9:-4]] = name
@@ -72,11 +72,11 @@ def sqlify_xmfa(filename, dbname, tblname=''):
     for p in range(1, block+1):
         cursor.execute('SELECT sequence_name FROM ' + tblname + ' WHERE block=?',
                        (p,))
-        block_sequences = [str(row[0]) for row in cursor.fetchall()]
+        block_sequences = [row[0] for row in cursor.fetchall()]
         for q in sequence_names:
             if q not in block_sequences:
                 cursor.execute('INSERT INTO ' + tblname + ' VALUES (?,?,?,?,?)',
-                               (p, q, '', 0, 0))
+                               (p, sequence_names[q], '', 0, 0))
                 conn.commit()
     cursor.execute('CREATE INDEX id_' + tblname + ' ON ' + tblname + '(block)')
     conn.commit()
@@ -84,26 +84,28 @@ def sqlify_xmfa(filename, dbname, tblname=''):
     conn.close()
     return dbname
 
-def call_polymorphisms(alignmentdb, sequencedb, tblname):
-    conn = sqlite3.connect(alignmentdb)
+def call_polymorphisms(dbname, tblname):
+    conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT sequence_name FROM ' + tblname)
     sequence_names = [row[0] for row in cursor.fetchall()]
+    print sequence_names
     columns = ' text, '.join(sequence_names)
-    value_placeholders = ', '.join(list('?' for n in range(sequence_names)))
+    print columns
+    value_placeholders = ', '.join(list('?' for n in range(len(sequence_names))))
     cursor.execute('CREATE TABLE IF NOT EXISTS snps_' + tblname + """(
                     block text,
                     position integer,
-                    """ + columns + """
+                    """ + columns + """ text
                     )""")
     cursor.execute('CREATE TABLE IF NOT EXISTS indels_' + tblname + """(
                     block text,
                     position integer,
-                    """ + columns + """ 
+                    """ + columns + """ text
                     )""")
     cursor.execute('CREATE TABLE IF NOT EXISTS blocks_' + tblname + """(
                     block text,
-                    """ + columns + """
+                    """ + columns + """ text
                     )""")
     cursor.execute('SELECT DISTINCT block FROM ' + tblname)
     blocks = [row[0] for row in cursor.fetchall()]
