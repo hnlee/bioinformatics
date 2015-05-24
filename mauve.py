@@ -84,6 +84,60 @@ def sqlify_xmfa(filename, dbname, tblname=''):
     conn.close()
     return dbname
 
-def call_polymorphisms(dbname, tblname, outputname):
-    return outputname
+def call_polymorphisms(alignmentdb, sequencedb, tblname):
+    conn = sqlite3.connect(alignmentdb)
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT sequence_name FROM ' + tblname)
+    sequence_names = [row[0] for row in cursor.fetchall()]
+    columns = ' text, '.join(sequence_names)
+    value_placeholders = ', '.join(list('?' for n in range(sequence_names)))
+    cursor.execute('CREATE TABLE IF NOT EXISTS snps_' + tblname + """(
+                    block text,
+                    position integer,
+                    """ + columns + """
+                    )""")
+    cursor.execute('CREATE TABLE IF NOT EXISTS indels_' + tblname + """(
+                    block text,
+                    position integer,
+                    """ + columns + """ 
+                    )""")
+    cursor.execute('CREATE TABLE IF NOT EXISTS blocks_' + tblname + """(
+                    block text,
+                    """ + columns + """
+                    )""")
+    cursor.execute('SELECT DISTINCT block FROM ' + tblname)
+    blocks = [row[0] for row in cursor.fetchall()]
+    for p in blocks:
+        cursor.execute('SELECT sequence_name, sequence FROM ' + tblname + 'WHERE block=?',
+                       (p,))
+        alignment = dict(list((row[0], row[1]) for row in cursor.fetchall()))
+        alignment_length = max(list(len(alignment[sequence_name] 
+                                    for sequence_name in alignment)))
+        absent = [sequence_name for sequence_name in alignment
+                  if alignment[sequence_name] != '']
+        cursor.execute("""INSERT INTO blocks_""" + tblname + """
+                          VALUES (?, """ + value_placeholders + """)""",
+                        tuple(int(sequence_name in absent) 
+                              for sequence_name in sequence_names))
+        conn.commit()
+        aligned_positions = zip(*list(alignment[sequence_name] 
+                                      for sequence_name in sequence_names
+                                      if sequence_names not in absent))
+        for q in range(alignment_length):
+            alleles = set(aligned_positions[q])
+            if len(alleles) == 1:
+                continue
+            elif len(alleles) == 2 and '-' in alleles:
+                cursor.execute("""INSERT INTO indels_""" + tblname + """
+                                  VALUES (?, ?, """ + value_placeholders + """)""",
+                               tuple([p, q+1] + list(alignment[sequence_name][q]
+                                                     for sequence_name in sequence_names)))
+                conn.commit()
+            else:
+                cursor.execute("""INSERT INTO snps_""" + tblname + """
+                                  VALUES (?, ?, """ + value_placeholders + """)""",
+                               tuple([p, q+1] + list(alignment[sequence_name][q]
+                                                     for sequence_name in sequence_names)))
+                conn.commit()
+    return dbname
 
