@@ -89,9 +89,7 @@ def call_polymorphisms(dbname, tblname):
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT sequence_name FROM ' + tblname)
     sequence_names = [row[0] for row in cursor.fetchall()]
-    print sequence_names
     columns = ' text, '.join(sequence_names)
-    print columns
     value_placeholders = ', '.join(list('?' for n in range(len(sequence_names))))
     cursor.execute('CREATE TABLE IF NOT EXISTS snps_' + tblname + """(
                     block text,
@@ -110,21 +108,22 @@ def call_polymorphisms(dbname, tblname):
     cursor.execute('SELECT DISTINCT block FROM ' + tblname)
     blocks = [row[0] for row in cursor.fetchall()]
     for p in blocks:
-        cursor.execute('SELECT sequence_name, sequence FROM ' + tblname + 'WHERE block=?',
+        cursor.execute('SELECT sequence_name, sequence FROM ' + tblname + ' WHERE block=?',
                        (p,))
         alignment = dict(list((row[0], row[1]) for row in cursor.fetchall()))
-        alignment_length = max(list(len(alignment[sequence_name] 
-                                    for sequence_name in alignment)))
+        print alignment
+        alignment_length = max(list(len(alignment[sequence_name]) 
+                                    for sequence_name in alignment))
         absent = [sequence_name for sequence_name in alignment
-                  if alignment[sequence_name] != '']
+                  if alignment[sequence_name] == '']
         cursor.execute("""INSERT INTO blocks_""" + tblname + """
                           VALUES (?, """ + value_placeholders + """)""",
-                        tuple(int(sequence_name in absent) 
-                              for sequence_name in sequence_names))
+                        tuple([p] + list(int(sequence_name in absent) 
+                                         for sequence_name in sequence_names)))
         conn.commit()
         aligned_positions = zip(*list(alignment[sequence_name] 
                                       for sequence_name in sequence_names
-                                      if sequence_names not in absent))
+                                      if sequence_name not in absent))
         for q in range(alignment_length):
             alleles = set(aligned_positions[q])
             if len(alleles) == 1:
