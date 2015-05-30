@@ -146,3 +146,5 @@ def call_polymorphisms(dbname, tblname):
     conn.close()
     return dbname
 
+def write_polymorphisms(dbname, tblname, outputname):
+    return outputname
