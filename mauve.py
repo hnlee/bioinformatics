@@ -208,6 +208,7 @@ def write_polymorphisms(sequencedb, alignmentdb, tblname, outputname):
                     fasta_position = mauve_coordinates((snp_position), sequencedb, j)
                     output.write('\t%s\t%i' % fasta_position[0])
             output.write('\n')
+        print 'Wrote polymorphisms in local colinear block %i to table' % p
     conn.close()
     output.close()
     return outputname
