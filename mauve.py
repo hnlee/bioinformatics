@@ -160,7 +160,7 @@ def write_polymorphisms(sequencedb, alignmentdb, tblname, outputname):
                                          x + '_position\t',
                                sequence_names)))
     for p in blocks:
-        cursor.execute('SELECT * FROM blocks_' + tblname + ' WHERE block=?'. (p,))
+        cursor.execute('SELECT * FROM blocks_' + tblname + ' WHERE block=?', (p,))
         block_data = '\t'.join(map(lambda x: x + '\tNA', cursor.fetchone()))
         output.write('block\t%i\t%s\n' % (p, block_data))
         cursor.execute('SELECT * FROM snps_' + tblname + ' WHERE block=?', (p,))
