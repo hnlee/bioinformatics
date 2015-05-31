@@ -146,5 +146,68 @@ def call_polymorphisms(dbname, tblname):
     conn.close()
     return dbname
 
-def write_polymorphisms(dbname, tblname, outputname):
+def write_polymorphisms(sequencedb, alignmentdb, tblname, outputname):
+    output = open(outputname, 'w')
+    conn = sqlite3.connect(alignmentdb)
+    cursor = connect.cursor()
+    cursor.execute('SELECT DISTINCT block FROM ' + tblname)
+    blocks = [row[0] for row in cursor.fetchall()]
+    cursor.execute('PRAGMA table_info(blocks_' + tblname + ')')
+    sequence_names = [row[1] for row in cursor.fetchall() if row[2] == 'text']
+    output.write('Type\tBlock\t%s\n' % 
+                 '\t'.join(map(lambda x: x + '_allele\t' + 
+                                         x + '_contig\t' +
+                                         x + '_position\t',
+                               sequence_names)))
+    for p in blocks:
+        cursor.execute('SELECT * FROM blocks_' + tblname + ' WHERE block=?'. (p,))
+        block_data = '\t'.join(map(lambda x: x + '\tNA', cursor.fetchone()))
+        output.write('block\t%i\t%s\n' % (p, block_data))
+        cursor.execute('SELECT * FROM snps_' + tblname + ' WHERE block=?', (p,))
+        snp_data = [row[1:] for row in cursor.fetchall()]
+        for q in snp_data:
+            output.write('snp\t%i' % p)
+            block_position = q[0]
+            for (i, j) in enumerate(sequence_names):
+                output.write('\t%s' % q[i+1])
+                if q[i+1] == '_':
+                    output.write('\tNA\tNA')
+                else:
+                    cursor.execute("""SELECT sequence, start, end FROM """ + tblname + """ 
+                                      WHERE block=? AND sequence_name=?""",
+                                   (p, j))
+                    (sequence, start, end) = cursor.fetchone()
+                    gaps = sequence[:block_position].count('-')
+                    snp_position = block_position - gaps + min(start, end)
+                    fasta_position = mauve_coordinates((snp_position), sequencedb, j)
+                    output.write('\t%s\t%i' % fasta_position[0])
+            output.write('\n')
+        cursor.execute('SELECT * FROM indels_' + tblname + ' WHERE block=?', (p,))
+        indel_data = [row[1:] for row in cursor.fetchall()]
+        for r in indel_data:
+            output.write('indel\t%i' % p)
+            block_position = q[0]
+            for (i, j) in enumerate(sequence_names):
+                output.write('\t%s' % q[i+1])
+                if q[i+1] == '_':
+                    output.write('\tNA\tNA')
+                elif q[i+1] == '-':
+                    cursor.execute("""SELECT start, end FROM """ + tblname + """
+                                      WHERE block=? AND sequence_name=?""",
+                                   (p, j))
+                    (start, end) = cursor.fetchone()
+                    fasta_position = mauve_coordinates((min(start, end)), sequencedb, j)
+                    output.write('\t%s\tNA' % fasta_position[0][0])
+                else:
+                    cursor.execute("""SELECT sequence, start, end FROM """ + tblname + """ 
+                                      WHERE block=? AND sequence_name=?""",
+                                   (p, j))
+                    (sequence, start, end) = cursor.fetchone()
+                    gaps = sequence[:block_position].count('-')
+                    indel_position = block_position - gaps + min(start, end)
+                    fasta_position = mauve_coordinates((snp_position), sequencedb, j)
+                    output.write('\t%s\t%i' % fasta_position[0])
+            output.write('\n')
+    conn.close()
+    output.close()
     return outputname
