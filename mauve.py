@@ -161,12 +161,23 @@ def write_polymorphisms(sequencedb, alignmentdb, tblname, outputname):
                                sequence_names)))
     for p in blocks:
         cursor.execute('SELECT * FROM blocks_' + tblname + ' WHERE block=?', (p,))
-        block_data = '\t'.join(map(lambda x: x + '\tNA', cursor.fetchone()[1:]))
-        output.write('block\t%i\t%s\n' % (p, block_data))
+        block_data = cursor.fetchone()[1:]
+        output.write('block\t%i\t%s\n' % (p, '\t'.join(map(lambda x: x + '\tNA',
+                                                           block_data))))
         cursor.execute('SELECT * FROM snps_' + tblname + ' WHERE block=?', (p,))
         snp_data = [row[1:] for row in cursor.fetchall()]
         cursor.execute('SELECT * FROM indels_' + tblname + ' WHERE block=?', (p,))
         indel_data = [row[1:] for row in cursor.fetchall()]
+        block_coordinates = {}
+        for (i, j) in enumerate(sequence_names):
+            if block_data[i] == '0':
+                block_coordinates[j] = [('NA','NA'), ('NA','NA')]
+            else:
+                cursor.execute("""SELECT start, end FROM """ + tblname + """ 
+                                  WHERE block=? and sequence_name=?""",
+                               (p, j))
+                (start, end) = cursor.fetchone()
+                block_coordinates[j] = mauve_coordinates((start, end), sequencedb, j)
         for q in snp_data + indel_data:
             if len(set(q[1:]) - set(['_','-'])) > 1:
                 output.write('snp\t%i' % p)
@@ -176,26 +187,20 @@ def write_polymorphisms(sequencedb, alignmentdb, tblname, outputname):
             for (i, j) in enumerate(sequence_names):
                 output.write('\t%s' % q[i+1])
                 if q[i+1] == '_':
-                    output.write('\tNA\tNA')
+                    output.write('\t%s' % '\t'.join(block_coordinates[j][0]))
                 elif q[i+1] == '-':
-                    cursor.execute("""SELECT start, end FROM """ + tblname + """
-                                      WHERE block=? AND sequence_name=?""",
-                                   (p, j))
-                    (start, end) = cursor.fetchone()
-                    fasta_position = mauve_coordinates((min(start, end),), sequencedb, j)
-                    output.write('\t%s\tNA' % fasta_position[0][0])
+                    output.write('\t%s\tNA' % block_coordinates[j][0][0])
                 else:
-                    cursor.execute("""SELECT sequence, start, end FROM """ + tblname + """ 
+                    cursor.execute("""SELECT sequence FROM """ + tblname + """ 
                                       WHERE block=? AND sequence_name=?""",
                                    (p, j))
-                    (sequence, start, end) = cursor.fetchone()
+                    sequence = cursor.fetchone()[0]
                     gaps = sequence[:block_position].count('-')
-                    if start < end:
-                        snp_position = block_position - gaps + start - 1
+                    if block_coordinates[j][0][1] < block_coordinates[j][1][1]:
+                        snp_position = block_position - gaps + block_coordinates[j][0][1] - 1
                     else:
-                        snp_position = start - (block_position - gaps) + 1
-                    fasta_position = mauve_coordinates((snp_position,), sequencedb, j)
-                    output.write('\t%s\t%i' % fasta_position[0])
+                        snp_position = block_coordinates[j][0][1] - (block_position - gaps) + 1
+                    output.write('\t%s\t%i' % (block_coordinates[j][0][0], snp_position))
             output.write('\n')
         print 'Wrote polymorphisms in local colinear block %i to table' % p
     conn.close()
